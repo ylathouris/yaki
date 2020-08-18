@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "yaki"
+version = "0.1.0"
+description = "Python Plugin Helper"
+authors = ["Yani Lathouris <ylathouris@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.0.1"
+pytest_cov = "^2.10.1"
+coverage_badge = "^1.0.1"
+mypy = "^0.782"
+isort = "^5.4.2"
+black = "^19.10b0"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
