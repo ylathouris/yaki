@@ -265,6 +265,70 @@ class TestLoadPlugin:
             yaki.load_plugin("some.bogus.nonsense")
 
 
+class TestPluginGroup:
+    """
+    Test Plugin Group
+
+    Tests for the plugin group object.
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.dist = mock.MagicMock()
+        self.dist.project_name = "mypackage"
+        self.dist.version = "1.2.3"
+
+        self.entrypoint = mock.MagicMock()
+        self.entrypoint.dist = self.dist
+        self.entrypoint.name = "baz"
+        self.entrypoint.module_name = "mymodule"
+
+        entries = {"mypackage.foo.bar": {"baz": self.entrypoint}}
+        self.dist.get_entry_map.return_value = entries
+
+    def test_properties(self):
+        group = yaki.PluginGroup("mypackage.foo.bar", self.dist)
+
+        assert group.name == "mypackage.foo.bar"
+        assert group.dist == self.dist
+
+    def test_get_returns_expected_plugin_with_valid_name(self):
+        group = yaki.PluginGroup("mypackage.foo.bar", self.dist)
+
+        baz = group.get("baz")
+
+        assert isinstance(baz, yaki.Plugin)
+        assert baz.name == "baz"
+        assert baz.path == "mypackage.foo.bar.baz"
+        assert baz.entrypoint == self.entrypoint
+
+    def test_get_returns_none_with_invalid_name(self):
+        group = yaki.PluginGroup("mypackage.foo.bar", self.dist)
+
+        assert group.get("nonsense") is None
+
+    def test_load_valid_plugin_loads_plugin(self):
+        group = yaki.PluginGroup("mypackage.foo.bar", self.dist)
+        mockplugin = mock.MagicMock()
+        mockplugin.load.return_value = "loaded"
+        group.get = mock.MagicMock()
+        group.get.return_value = mockplugin
+
+        value = group.load("baz")
+
+        assert value == "loaded"
+        group.get.assert_called_once_with("baz")
+        mockplugin.load.assert_called_once()
+
+    def test_load_invalid_plugin_raises_value_error(self):
+        group = yaki.PluginGroup("mypackage.foo.bar", self.dist)
+        group.get = mock.MagicMock()
+        group.get.return_value = None
+
+        with pytest.raises(ValueError):
+            group.load("nonsense")
+
+
 class TestPlugin:
     """
     Test Plugin

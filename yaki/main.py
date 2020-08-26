@@ -79,6 +79,44 @@ class Plugin:
         return f"Plugin({self.path})"
 
 
+@dataclasses.dataclass()
+class PluginGroup:
+    """
+    Plugin Group
+
+    This class represents a group, or category, of plugins.
+    """
+
+    name: str
+    dist: pkg_resources.EggInfoDistribution
+
+    def get(self, name: str) -> Optional[Plugin]:
+        """
+        Get plugin
+
+        Get plugin with the given name.
+        """
+        plugin = None
+        entries = self.dist.get_entry_map()
+        entrypoint = entries.get(self.name, {}).get(name)
+        if entrypoint:
+            plugin = Plugin(self.name, entrypoint)
+
+        return plugin
+
+    def load(self, name: str, *args, **kwargs) -> Any:
+        """
+        Load plugin
+
+        Load the given plugin and return the result.
+        """
+        plugin = self.get(name)
+        if not plugin:
+            raise ValueError(f"Cannot find plugin: {self.name}.{name}")
+
+        return plugin.load(*args, **kwargs)
+
+
 class Plugins:
     """
     Plugins
@@ -200,3 +238,9 @@ class Plugins:
             raise ValueError(f"Cannot find plugin: {path}")
 
         return plugin.load()
+
+
+def register(path):
+    def wrapper(obj):
+        return obj
+    return wrapper
