@@ -161,7 +161,6 @@ class Plugins:
     @property
     def groups(self) -> List[str]:
         entries = self.dist.get_entry_map()
-        print(entries, [i for i in entries])
         return [i for i in entries if i.startswith(self.name)]
 
     def group(self, name: str) -> Optional[PluginGroup]:
