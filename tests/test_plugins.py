@@ -65,6 +65,44 @@ class TestGetPluginGroups:
         assert plugins.groups == list(entries.keys())[1:]
 
 
+class TestGetPluginGroup:
+    """
+    Test Get Plugin Group
+
+    Tests for getting a plugin group.
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self, mockgetdist):
+        self.entries = {"mypackage.bitsnbobs": {"foo": mock.MagicMock()}}
+        mockdist = mock.MagicMock()
+        mockdist.project_name = "mypackage"
+        mockdist.get_entry_map.return_value = self.entries
+        mockgetdist.return_value = mockdist
+
+    def test_returns_expected_for_short_group_name(self):
+        plugins = yaki.plugins("mypackage")
+        group = plugins.group("bitsnbobs")
+
+        assert isinstance(group, yaki.PluginGroup)
+        assert group.name == "mypackage.bitsnbobs"
+        assert group.dist == plugins.dist
+
+    def test_returns_expected_for_full_group_name(self):
+        plugins = yaki.plugins("mypackage")
+        group = plugins.group("mypackage.bitsnbobs")
+
+        assert isinstance(group, yaki.PluginGroup)
+        assert group.name == "mypackage.bitsnbobs"
+        assert group.dist == plugins.dist
+
+    def test_returns_none_for_invalid_group(self):
+        plugins = yaki.plugins("mypackage")
+        group = plugins.group("nonsense")
+
+        assert group is None
+
+
 class TestGetPlugin:
     """
     Test Get Plugin
@@ -291,6 +329,7 @@ class TestPluginGroup:
 
         assert group.name == "mypackage.foo.bar"
         assert group.dist == self.dist
+        assert group.keys == ["baz"]
 
     def test_get_returns_expected_plugin_with_valid_name(self):
         group = yaki.PluginGroup("mypackage.foo.bar", self.dist)

@@ -90,6 +90,11 @@ class PluginGroup:
     name: str
     dist: pkg_resources.EggInfoDistribution
 
+    @property
+    def keys(self) -> List[str]:
+        entries = self.dist.get_entry_map()
+        return list(entries.get(self.name, {}))
+
     def get(self, name: str) -> Optional[Plugin]:
         """
         Get plugin
@@ -156,7 +161,25 @@ class Plugins:
     @property
     def groups(self) -> List[str]:
         entries = self.dist.get_entry_map()
+        print(entries, [i for i in entries])
         return [i for i in entries if i.startswith(self.name)]
+
+    def group(self, name: str) -> Optional[PluginGroup]:
+        """
+        Get plugin group
+
+        Get plugin group with the given name.
+        """
+        group = None
+
+        key = name
+        if not key.startswith(self.name):
+            key = f"{self.name}.{key}"
+
+        if key in self.groups:
+            group = PluginGroup(key, self.dist)
+
+        return group
 
     def parse(self, path: str, filler: bool = False) -> Tuple[str, str]:
         """
