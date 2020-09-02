@@ -229,6 +229,7 @@ class TestFindPlugins:
         mockdist.get_entry_map.return_value = self.entries
         mockdist.get_entry_info.side_effect = get_entry_info
         mockgetdist.return_value = mockdist
+        pkg_resources.working_set = [mockdist]
 
     def test_returns_expected_with_full_path(self):
         plugins = yaki.get_plugins("mypackage.readers.yml")
@@ -322,7 +323,16 @@ class TestPluginGroup:
         self.entrypoint.module_name = "mymodule"
 
         entries = {"mypackage.foo.bar": {"baz": self.entrypoint}}
-        self.dist.get_entry_map.return_value = entries
+
+        def get_entry_map(group=None):
+            return entries.get(group) if group else entries
+
+        self.dist.get_entry_map.side_effect = get_entry_map
+
+        def iter_entry_points(group):
+            return entries.get(group).values()
+
+        pkg_resources.iter_entry_points = iter_entry_points
 
     def test_properties(self):
         group = yaki.PluginGroup("mypackage.foo.bar", self.dist)

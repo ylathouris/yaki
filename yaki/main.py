@@ -92,8 +92,8 @@ class PluginGroup:
 
     @property
     def keys(self) -> List[str]:
-        entries = self.dist.get_entry_map()
-        return list(entries.get(self.name, {}))
+        entrypoints = pkg_resources.iter_entry_points(self.name)
+        return [ep.name for ep in entrypoints]
 
     def get(self, name: str) -> Optional[Plugin]:
         """
@@ -101,13 +101,12 @@ class PluginGroup:
 
         Get plugin with the given name.
         """
-        plugin = None
-        entries = self.dist.get_entry_map()
-        entrypoint = entries.get(self.name, {}).get(name)
-        if entrypoint:
-            plugin = Plugin(self.name, entrypoint)
+        entrypoints = pkg_resources.iter_entry_points(self.name)
+        for entrypoint in entrypoints:
+            if entrypoint.name == name:
+                return Plugin(self.name, entrypoint)
 
-        return plugin
+        return None
 
     def load(self, name: str, *args, **kwargs) -> Any:
         """
@@ -137,7 +136,7 @@ class Plugins:
         try:
             dist = pkg_resources.get_distribution(name)
         except pkg_resources.DistributionNotFound as err:
-            raise ValueError(f"Cannot find packge: {name}")
+            raise ValueError(f"Cannot find package: {name}")
 
         return cls(dist)
 
@@ -233,10 +232,11 @@ class Plugins:
     def _find(self, group_pattern: str, name_pattern: str) -> Generator:
         group_regex = self._regexify(group_pattern)
         name_regex = self._regexify(name_pattern)
-        entries = self.dist.get_entry_map()
-        for group, entrypoints in self._match(entries, group_regex):
-            for name, _ in self._match(entrypoints, name_regex):
-                yield self._get(group, name)
+        for dist in pkg_resources.working_set:
+            entries = dist.get_entry_map()
+            for group, entrypoints in self._match(entries, group_regex):
+                for name, _ in self._match(entrypoints, name_regex):
+                    yield self._get(group, name)
 
     def _match(self, items: Dict, regex: re.Pattern) -> Generator:
         for key, value in items.items():
