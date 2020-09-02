@@ -7,7 +7,8 @@ from .main import (
     Plugins,
     get_plugin,
     get_plugins,
+    init,
     load_plugin,
-    plugins,
     register,
+    search,
 )

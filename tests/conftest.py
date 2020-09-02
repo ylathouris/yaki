@@ -1,8 +1,7 @@
-
 from unittest import mock
 
-import pytest
 import pkg_resources
+import pytest
 
 
 @pytest.fixture()

@@ -6,23 +6,29 @@ from typing import Any, Dict, Generator, List, Optional, Tuple
 import pkg_resources
 
 
+def init(name: str):
+    return Plugins.create(name)
+
+
 def get_plugin(path: str):
     name = path.split(".")[0]
-    return plugins(name).get(path)
+    return init(name).get(path)
 
 
 def get_plugins(path: str):
     name = path.split(".")[0]
-    return list(plugins(name).find(path))
+    group = init(name).group(path)
+    return group.plugins if group else []
 
 
 def load_plugin(path: str) -> Any:
     name = path.split(".")[0]
-    return plugins(name).load(path)
+    return init(name).load(path)
 
 
-def plugins(name: str):
-    return Plugins.create(name)
+def search(path: str):
+    name = path.split(".")[0]
+    return list(init(name).search(path))
 
 
 @dataclasses.dataclass()
@@ -88,12 +94,19 @@ class PluginGroup:
     """
 
     name: str
-    dist: pkg_resources.EggInfoDistribution
+    dist: pkg_resources.EggInfoDistribution  # type: ignore
+
+    @property
+    def entrypoints(self) -> List[pkg_resources.EntryPoint]:
+        return list(pkg_resources.iter_entry_points(self.name))
 
     @property
     def keys(self) -> List[str]:
-        entrypoints = pkg_resources.iter_entry_points(self.name)
-        return [ep.name for ep in entrypoints]
+        return [ep.name for ep in self.entrypoints]
+
+    @property
+    def plugins(self) -> List[Plugin]:
+        return [Plugin(self.name, ep) for ep in self.entrypoints]
 
     def get(self, name: str) -> Optional[Plugin]:
         """
@@ -101,8 +114,7 @@ class PluginGroup:
 
         Get plugin with the given name.
         """
-        entrypoints = pkg_resources.iter_entry_points(self.name)
-        for entrypoint in entrypoints:
+        for entrypoint in self.entrypoints:
             if entrypoint.name == name:
                 return Plugin(self.name, entrypoint)
 
@@ -220,16 +232,16 @@ class Plugins:
 
         return plugin
 
-    def find(self, pattern: str) -> List[Plugin]:
+    def search(self, pattern: str) -> List[Plugin]:
         """
-        Find plugins
+        Search plugins
 
         Find plugins that match the given pattern.
         """
         group, name = self.parse(pattern, filler=True)
-        return list(self._find(group, name))
+        return list(self._search(group, name))
 
-    def _find(self, group_pattern: str, name_pattern: str) -> Generator:
+    def _search(self, group_pattern: str, name_pattern: str) -> Generator:
         group_regex = self._regexify(group_pattern)
         name_regex = self._regexify(name_pattern)
         for dist in pkg_resources.working_set:
@@ -265,4 +277,5 @@ class Plugins:
 def register(path):
     def wrapper(obj):
         return obj
+
     return wrapper

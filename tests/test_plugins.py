@@ -1,4 +1,3 @@
-
 from unittest import mock
 
 import pkg_resources
@@ -15,7 +14,7 @@ class TestPlugins:
     """
 
     def test_gets_package_distribution(self, mockgetdist):
-        yaki.plugins("foo")
+        yaki.init("foo")
 
         mockgetdist.assert_called_once_with("foo")
 
@@ -25,7 +24,7 @@ class TestPlugins:
         mockdist.version = "1.2.3"
         mockgetdist.return_value = mockdist
 
-        plugins = yaki.plugins("mypackage")
+        plugins = yaki.init("mypackage")
 
         assert isinstance(plugins, yaki.Plugins)
         assert plugins.name == "mypackage"
@@ -34,12 +33,12 @@ class TestPlugins:
     def test_raises_value_error_for_invalid_package(self, mockgetdist):
         mockgetdist.side_effect = pkg_resources.DistributionNotFound
         with pytest.raises(ValueError):
-            yaki.plugins("nonsense")
+            yaki.init("nonsense")
 
     @pytest.mark.parametrize("path", ["*", "123abc", "0", "", "."])
     def test_raises_value_error_for_invalid_package_name(self, path):
         with pytest.raises(ValueError):
-            yaki.plugins(path)
+            yaki.init(path)
 
 
 class TestGetPluginGroups:
@@ -53,14 +52,14 @@ class TestGetPluginGroups:
         entries = {
             "console_scripts": {},
             "mypackage.readers": {},
-            "mypackage.image.formats": {}
+            "mypackage.image.formats": {},
         }
         mockdist = mock.MagicMock()
         mockdist.project_name = "mypackage"
         mockdist.get_entry_map.return_value = entries
         mockgetdist.return_value = mockdist
 
-        plugins = yaki.plugins("mypackage")
+        plugins = yaki.init("mypackage")
 
         assert plugins.groups == list(entries.keys())[1:]
 
@@ -81,7 +80,7 @@ class TestGetPluginGroup:
         mockgetdist.return_value = mockdist
 
     def test_returns_expected_for_short_group_name(self):
-        plugins = yaki.plugins("mypackage")
+        plugins = yaki.init("mypackage")
         group = plugins.group("bitsnbobs")
 
         assert isinstance(group, yaki.PluginGroup)
@@ -89,7 +88,7 @@ class TestGetPluginGroup:
         assert group.dist == plugins.dist
 
     def test_returns_expected_for_full_group_name(self):
-        plugins = yaki.plugins("mypackage")
+        plugins = yaki.init("mypackage")
         group = plugins.group("mypackage.bitsnbobs")
 
         assert isinstance(group, yaki.PluginGroup)
@@ -97,7 +96,7 @@ class TestGetPluginGroup:
         assert group.dist == plugins.dist
 
     def test_returns_none_for_invalid_group(self):
-        plugins = yaki.plugins("mypackage")
+        plugins = yaki.init("mypackage")
         group = plugins.group("nonsense")
 
         assert group is None
@@ -153,12 +152,11 @@ class TestGetPlugin:
         "*",
         "*.*",
         "*.*.*",
-        "*.*.*.*"
-        "*.foo.bar",
+        "*.*.*.*" "*.foo.bar",
         "*.foo.*",
         "*.*.bar",
         "foo.*",
-        "group.name"
+        "group.name",
     ]
 
     @pytest.mark.parametrize("path", VALID_PATHS)
@@ -192,11 +190,11 @@ class TestGetPlugin:
             yaki.get_plugin(path)
 
 
-class TestFindPlugins:
+class TestGetPlugins:
     """
-    Test Find Plugins
+    Test Get Plugins
 
-    Tests for finding a set of plugins based on a given path.
+    Tests for getting all plugins for a given group.
     """
 
     @pytest.fixture(autouse=True)
@@ -218,11 +216,14 @@ class TestFindPlugins:
             "mypackage.writers": {
                 "yml": self.yml_writer,
                 "csv": self.csv_writer,
-            }
+            },
         }
 
         def get_entry_info(group, name):
             return self.entries[group][name]
+
+        def iter_entry_points(group):
+            return self.entries.get(group).values()
 
         mockdist = mock.MagicMock()
         mockdist.project_name = "mypackage"
@@ -230,15 +231,40 @@ class TestFindPlugins:
         mockdist.get_entry_info.side_effect = get_entry_info
         mockgetdist.return_value = mockdist
         pkg_resources.working_set = [mockdist]
+        pkg_resources.iter_entry_points = iter_entry_points
+
+    def test_returns_expected_with_valid_group_name(self):
+        plugins = yaki.get_plugins("mypackage.readers")
+
+        expected = [
+            yaki.Plugin("mypackage.readers", self.yml_reader),
+            yaki.Plugin("mypackage.readers", self.csv_reader),
+        ]
+
+        assert plugins == expected
+
+    def test_returns_expected_empty_list_with_invalid_group_name(self):
+        plugins = yaki.get_plugins("mypackage.sillyhats")
+
+        expected = []
+        assert plugins == expected
+
+
+class TestSearch(TestGetPlugins):
+    """
+    Test Search
+
+    Tests for finding a set of plugins based on a given path.
+    """
 
     def test_returns_expected_with_full_path(self):
-        plugins = yaki.get_plugins("mypackage.readers.yml")
+        plugins = yaki.search("mypackage.readers.yml")
 
         expected = [yaki.Plugin("mypackage.readers", self.yml_reader)]
         assert plugins == expected
 
     def test_returns_expected_with_name_wildcard(self):
-        plugins = yaki.get_plugins("mypackage.writers")
+        plugins = yaki.search("mypackage.writers")
 
         expected = [
             yaki.Plugin("mypackage.writers", self.yml_writer),
@@ -247,7 +273,7 @@ class TestFindPlugins:
         assert plugins == expected
 
     def test_returns_expected_with_group_wildcard(self):
-        plugins = yaki.get_plugins("mypackage.*.yml")
+        plugins = yaki.search("mypackage.*.yml")
 
         expected = [
             yaki.Plugin("mypackage.readers", self.yml_reader),
@@ -256,7 +282,7 @@ class TestFindPlugins:
         assert plugins == expected
 
     def test_returns_all_plugins_for_package_name(self):
-        plugins = yaki.get_plugins("mypackage")
+        plugins = yaki.search("mypackage")
 
         expected = [
             yaki.Plugin("mypackage.readers", self.yml_reader),
@@ -267,7 +293,7 @@ class TestFindPlugins:
         assert plugins == expected
 
     def test_returns_empty_list_when_there_are_no_matches(self):
-        plugins = yaki.get_plugins("mypackage.formats.yml")
+        plugins = yaki.search("mypackage.formats.yml")
 
         assert plugins == []
 
