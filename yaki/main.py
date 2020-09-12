@@ -26,6 +26,13 @@ def load_plugin(path: str) -> Any:
     return init(name).load(path)
 
 
+def load_plugins(path: str) -> List:
+    name = path.split(".")[0]
+    group = init(name).group(path)
+    plugins = group.plugins if group else []
+    return [plugin.load() for plugin in plugins]
+
+
 def search(path: str):
     name = path.split(".")[0]
     return list(init(name).search(path))

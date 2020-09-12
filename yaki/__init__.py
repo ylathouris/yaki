@@ -9,6 +9,7 @@ from .main import (
     get_plugins,
     init,
     load_plugin,
+    load_plugins,
     register,
     search,
 )
