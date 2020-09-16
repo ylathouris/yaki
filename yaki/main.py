@@ -178,8 +178,12 @@ class Plugins:
 
     @property
     def groups(self) -> List[str]:
-        entries = self.dist.get_entry_map()
-        return [i for i in entries if i.startswith(self.name)]
+        groups = []
+        for dist in pkg_resources.working_set:
+            entries = dist.get_entry_map()
+            groups += [i for i in entries if i.startswith(self.name)]
+
+        return groups
 
     def group(self, name: str) -> Optional[PluginGroup]:
         """
@@ -233,7 +237,8 @@ class Plugins:
 
     def _get(self, group: str, name: str) -> Optional[Plugin]:
         plugin = None
-        entrypoint = self.dist.get_entry_info(group, name)
+        entrypoints = pkg_resources.iter_entry_points(group, name=name)
+        entrypoint = next(entrypoints, None)
         if entrypoint:
             plugin = Plugin(group, entrypoint)
 

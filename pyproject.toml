@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "yaki"
-version = "0.4.0"
+version = "0.5.0"
 description = "Python Plugin Helper"
 authors = ["Yani Lathouris <ylathouris@gmail.com>"]
 
