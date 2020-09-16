@@ -1,0 +1,61 @@
+[[package]]
+category = "main"
+description = "Cross-platform colored terminal text."
+name = "colorama"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+version = "0.4.3"
+
+[[package]]
+category = "main"
+description = "Emoji for Python"
+name = "emoji"
+optional = false
+python-versions = "*"
+version = "0.6.0"
+
+[package.extras]
+dev = ["pytest", "coverage", "coveralls"]
+
+[[package]]
+category = "main"
+description = ""
+develop = true
+name = "hello"
+optional = false
+python-versions = "^3.8"
+version = "0.1.0"
+
+[package.source]
+reference = ""
+type = "directory"
+url = "../hello"
+
+[[package]]
+category = "main"
+description = ""
+develop = true
+name = "yaki"
+optional = false
+python-versions = "^3.8"
+version = "0.4.0"
+
+[package.source]
+reference = ""
+type = "directory"
+url = "../.."
+
+[metadata]
+content-hash = "b8ea661d690c9bed4dea8e034eeef03b5be07a7d4c4886ca2b41abc5dc50c539"
+python-versions = "^3.8"
+
+[metadata.files]
+colorama = [
+    {file = "colorama-0.4.3-py2.py3-none-any.whl", hash = "sha256:7d73d2a99753107a36ac6b455ee49046802e59d9d076ef8e47b61499fa29afff"},
+    {file = "colorama-0.4.3.tar.gz", hash = "sha256:e96da0d330793e2cb9485e9ddfd918d456036c7149416295932478192f4436a1"},
+]
+emoji = [
+    {file = "emoji-0.6.0.tar.gz", hash = "sha256:e42da4f8d648f8ef10691bc246f682a1ec6b18373abfd9be10ec0b398823bd11"},
+]
+hello = []
+yaki = []

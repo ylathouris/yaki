@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "hello-tada"
+version = "0.1.0"
+description = "Hello World Plugin"
+authors = ["Yani Lathouris <ylathouris@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+emoji = "^0.6.0"
+colorama = "^0.4.3"
+yaki = { path = "../../" }
+hello = { path = "../hello" }
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.plugins."hello.formatters"]
+tada = "hello_tada.formatter:tada"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

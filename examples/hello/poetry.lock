@@ -1,0 +1,17 @@
+[[package]]
+category = "main"
+description = "Python Plugin Helper"
+name = "yaki"
+optional = false
+python-versions = ">=3.8,<4.0"
+version = "0.4.0"
+
+[metadata]
+content-hash = "73fcc15d58ce8255a625dceefcfcd498cd9d41a2b590c4c337985ed91f808b4d"
+python-versions = "^3.8"
+
+[metadata.files]
+yaki = [
+    {file = "yaki-0.4.0-py3-none-any.whl", hash = "sha256:3a6a3986091185d15b8e4559ae9dc69ce93546b743eb3b2db6cc88d102e7e9f0"},
+    {file = "yaki-0.4.0.tar.gz", hash = "sha256:9256cf9e60928ddc926fa145dc5fa9be676618fe5124d8f6147222fc8bc8ff36"},
+]
